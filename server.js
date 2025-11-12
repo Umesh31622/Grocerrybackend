@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const path = require("path");
 const fs = require("fs");
 require("dotenv").config();
-
+      
 // ===== ROUTES IMPORTS =====
 const adminAuthRoutes = require("./routes/adminAuthRoutes");
 const userAuthRoutes = require("./routes/userAuthRoutes");
@@ -13,35 +13,13 @@ const brokerRoutes = require("./routes/brokerRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const priceReportRoutes = require("./routes/priceReportRoutes");
 
+
 // ===== APP INIT =====
 const app = express();
 
-// ===== FRONTEND ORIGINS =====
-const allowedOrigins = [
-  "http://localhost:3000", // Local Dev
-  "https://grocerryadminfrontend.vercel.app", // Admin Frontend
-  "https://websitegrocerry.vercel.app", // User Website
-];
-
-// ===== CORS FIX (Handles Preflight + Secure Origins) =====
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-  }
-  // ✅ Allow these methods & headers
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
-  // ✅ Handle preflight requests directly (no crash)
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
-  }
-  next();
-});
-
-// ===== BODY PARSER =====
+// ===== MIDDLEWARES =====
 app.use(express.json());
+app.use(cors());
 
 // ===== Ensure Uploads Folder Exists =====
 const uploadDir = path.join(__dirname, "uploads");
@@ -60,20 +38,19 @@ mongoose
   .catch((err) => console.log("❌ MongoDB Error:", err));
 
 // ===== STATIC UPLOADS FOLDER =====
-// Serves images publicly e.g. http://localhost:7000/uploads/yourfile.png
+// Serves images publicly, e.g. http://localhost:7000/uploads/yourfile.png
 app.use("/uploads", express.static(uploadDir));
 
 // ===== ROUTES =====
 app.use("/api/admin", adminAuthRoutes);
 app.use("/api/user", userAuthRoutes);
-app.use("/api/prices", priceRoutes);
-app.use("/api/brokers", brokerRoutes);
+app.use("/api/prices", priceRoutes); // ✅ Price CRUD Routes
 app.use("/api/categories", categoryRoutes);
 app.use("/api/price-report", priceReportRoutes);
 
-// ===== HEALTH CHECK =====
+// ===== HEALTH CHECK ROUTE =====
 app.get("/", (req, res) => {
-  res.send("🚀 Grocery Backend Running Successfully with CORS Enabled!");
+  res.send("🚀 Server running successfully");
 });
 
 // ===== 404 HANDLER =====
@@ -89,4 +66,6 @@ app.use((err, req, res, next) => {
 
 // ===== SERVER START =====
 const PORT = process.env.PORT || 7000;
-app.listen(PORT, () => console.log(`🌐 Server running on port ${PORT}...`));
+app.listen(PORT, () =>
+  console.log(`🌐 Server running on port ${PORT}...`)
+);

@@ -1,34 +1,67 @@
 
+// // // // // const mongoose = require("mongoose");
+
+// // // // // const priceSchema = new mongoose.Schema({
+// // // // //   name: { type: String, required: true },
+// // // // //   category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
+// // // // //   basePrice: { type: Number, required: true },
+// // // // //   difference: { type: Number, default: 0 },
+// // // // //   validTill: { type: Date },
+// // // // //   description: { type: String },
+// // // // //   image: { type: String },
+// // // // //   createdAt: { type: Date, default: Date.now },
+// // // // // });
+
+// // // // // module.exports = mongoose.models.Price || mongoose.model("Price", priceSchema);
+
+
+// // // // // const mongoose = require("mongoose");
+
+// // // // // const priceSchema = new mongoose.Schema({
+// // // // //   name: { type: String, required: true },
+// // // // //   category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
+// // // // //   basePrice: { type: Number, required: true },
+// // // // //   difference: { type: Number, default: 0 },
+// // // // //   validTill: { type: Date },
+// // // // //   description: { type: String },
+// // // // //   image: { type: String },
+// // // // //   createdAt: { type: Date, default: Date.now },
+// // // // // });
+
+// // // // // module.exports = mongoose.models.Price || mongoose.model("Price", priceSchema);
+
 // // // // const mongoose = require("mongoose");
 
 // // // // const priceSchema = new mongoose.Schema({
 // // // //   name: { type: String, required: true },
-// // // //   category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
+
+// // // //   category: { 
+// // // //     type: mongoose.Schema.Types.ObjectId, 
+// // // //     ref: "Category", 
+// // // //     required: true 
+// // // //   },
+
 // // // //   basePrice: { type: Number, required: true },
+
 // // // //   difference: { type: Number, default: 0 },
+
 // // // //   validTill: { type: Date },
+
 // // // //   description: { type: String },
+
 // // // //   image: { type: String },
+
+// // // //   status: {
+// // // //     type: String,
+// // // //     enum: ["active", "inactive"],
+// // // //     default: "active"
+// // // //   },
+
 // // // //   createdAt: { type: Date, default: Date.now },
 // // // // });
 
 // // // // module.exports = mongoose.models.Price || mongoose.model("Price", priceSchema);
 
-
-// // // // const mongoose = require("mongoose");
-
-// // // // const priceSchema = new mongoose.Schema({
-// // // //   name: { type: String, required: true },
-// // // //   category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
-// // // //   basePrice: { type: Number, required: true },
-// // // //   difference: { type: Number, default: 0 },
-// // // //   validTill: { type: Date },
-// // // //   description: { type: String },
-// // // //   image: { type: String },
-// // // //   createdAt: { type: Date, default: Date.now },
-// // // // });
-
-// // // // module.exports = mongoose.models.Price || mongoose.model("Price", priceSchema);
 
 // // // const mongoose = require("mongoose");
 
@@ -62,26 +95,27 @@
 
 // // // module.exports = mongoose.models.Price || mongoose.model("Price", priceSchema);
 
-
 // // const mongoose = require("mongoose");
 
 // // const priceSchema = new mongoose.Schema({
 // //   name: { type: String, required: true },
 
-// //   category: { 
-// //     type: mongoose.Schema.Types.ObjectId, 
-// //     ref: "Category", 
-// //     required: true 
+// //   category: {
+// //     type: mongoose.Schema.Types.ObjectId,
+// //     ref: "Category",
+// //     required: true
+// //   },
+
+// //   subcategory: {
+// //     type: mongoose.Schema.Types.ObjectId,
+// //     ref: "Subcategory",
+// //     default: null
 // //   },
 
 // //   basePrice: { type: Number, required: true },
-
 // //   difference: { type: Number, default: 0 },
-
 // //   validTill: { type: Date },
-
 // //   description: { type: String },
-
 // //   image: { type: String },
 
 // //   status: {
@@ -93,7 +127,8 @@
 // //   createdAt: { type: Date, default: Date.now },
 // // });
 
-// // module.exports = mongoose.models.Price || mongoose.model("Price", priceSchema);
+// // module.exports =
+// //   mongoose.models.Price || mongoose.model("Price", priceSchema);
 
 // const mongoose = require("mongoose");
 
@@ -107,9 +142,9 @@
 //   },
 
 //   subcategory: {
-//     type: mongoose.Schema.Types.ObjectId,
-//     ref: "Subcategory",
-//     default: null
+//     id: String,
+//     name: String,
+//     image: String
 //   },
 
 //   basePrice: { type: Number, required: true },
@@ -130,7 +165,26 @@
 // module.exports =
 //   mongoose.models.Price || mongoose.model("Price", priceSchema);
 
+// models/priceModel.js
 const mongoose = require("mongoose");
+
+const SubRefSchema = new mongoose.Schema(
+  {
+    id: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
+    name: {
+      type: String,
+      default: "",
+    },
+    image: {
+      type: String,
+      default: null,
+    },
+  },
+  { _id: false }
+);
 
 const priceSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -138,13 +192,13 @@ const priceSchema = new mongoose.Schema({
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Category",
-    required: true
+    required: true,
   },
 
+  // embedded snapshot of subcategory (not populated via mongoose)
   subcategory: {
-    id: String,
-    name: String,
-    image: String
+    type: SubRefSchema,
+    default: null,
   },
 
   basePrice: { type: Number, required: true },
@@ -156,11 +210,10 @@ const priceSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ["active", "inactive"],
-    default: "active"
+    default: "active",
   },
 
   createdAt: { type: Date, default: Date.now },
 });
 
-module.exports =
-  mongoose.models.Price || mongoose.model("Price", priceSchema);
+module.exports = mongoose.models.Price || mongoose.model("Price", priceSchema);

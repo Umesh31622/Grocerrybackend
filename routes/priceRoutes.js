@@ -1,3 +1,32 @@
+// // // const express = require("express");
+// // // const router = express.Router();
+// // // const multer = require("multer");
+
+// // // const storage = multer.memoryStorage();
+// // // const upload = multer({ storage });
+
+// // // const priceController = require("../controllers/priceController");
+
+// // // // ⭐ STATUS ROUTE FIRST
+// // // router.put("/status/:id", priceController.updateStatus);
+
+// // // // ⭐ BULK UPDATE ROUTE (must be BEFORE /:id)
+// // // router.post("/bulk-update", priceController.bulkUpdatePrices);
+
+// // // // CRUD
+// // // router.get("/", priceController.getPrices);
+// // // router.post("/", upload.single("file"), priceController.createPrice);
+
+// // // // ⭐ dynamic route AFTER static routes
+// // // router.put("/:id", upload.single("file"), priceController.updatePrice);
+// // // router.delete("/:id", priceController.deletePrice);
+
+// // // // CSV
+// // // router.post("/import", upload.single("file"), priceController.importPrices);
+// // // router.get("/export", priceController.exportPrices);
+
+// // // module.exports = router;
+
 // // const express = require("express");
 // // const router = express.Router();
 // // const multer = require("multer");
@@ -7,25 +36,58 @@
 
 // // const priceController = require("../controllers/priceController");
 
-// // // ⭐ STATUS ROUTE FIRST
+// // /* =====================================================
+// //    WEBSITE API (SHOW TO CUSTOMERS)
+// // ===================================================== */
+// // router.get("/website", priceController.getWebsitePrices);
+
+// // /* =====================================================
+// //    STATUS UPDATE (STATIC ROUTE)
+// // ===================================================== */
 // // router.put("/status/:id", priceController.updateStatus);
 
-// // // ⭐ BULK UPDATE ROUTE (must be BEFORE /:id)
+// // /* =====================================================
+// //    BULK UPDATE (STATIC ROUTE)
+// // ===================================================== */
 // // router.post("/bulk-update", priceController.bulkUpdatePrices);
 
-// // // CRUD
+// // /* =====================================================
+// //    COPY PRODUCT (STATIC ROUTE)
+// // ===================================================== */
+// // router.post("/copy/:id", priceController.copyPrice);
+
+// // /* =====================================================
+// //    GET ALL PRICES (ADMIN PANEL)
+// // ===================================================== */
 // // router.get("/", priceController.getPrices);
+
+// // /* =====================================================
+// //    CREATE PRICE
+// // ===================================================== */
 // // router.post("/", upload.single("file"), priceController.createPrice);
 
-// // // ⭐ dynamic route AFTER static routes
-// // router.put("/:id", upload.single("file"), priceController.updatePrice);
-// // router.delete("/:id", priceController.deletePrice);
-
-// // // CSV
+// // /* =====================================================
+// //    IMPORT CSV
+// // ===================================================== */
 // // router.post("/import", upload.single("file"), priceController.importPrices);
+
+// // /* =====================================================
+// //    EXPORT CSV
+// // ===================================================== */
 // // router.get("/export", priceController.exportPrices);
 
+// // /* =====================================================
+// //    UPDATE PRICE (DYNAMIC ROUTE)
+// // ===================================================== */
+// // router.put("/:id", upload.single("file"), priceController.updatePrice);
+
+// // /* =====================================================
+// //    DELETE PRICE (DYNAMIC ROUTE)
+// // ===================================================== */
+// // router.delete("/:id", priceController.deletePrice);
+
 // // module.exports = router;
+
 
 // const express = require("express");
 // const router = express.Router();
@@ -36,58 +98,37 @@
 
 // const priceController = require("../controllers/priceController");
 
-// /* =====================================================
-//    WEBSITE API (SHOW TO CUSTOMERS)
-// ===================================================== */
+// // Website
 // router.get("/website", priceController.getWebsitePrices);
 
-// /* =====================================================
-//    STATUS UPDATE (STATIC ROUTE)
-// ===================================================== */
+// // Status
 // router.put("/status/:id", priceController.updateStatus);
 
-// /* =====================================================
-//    BULK UPDATE (STATIC ROUTE)
-// ===================================================== */
+// // Bulk update
 // router.post("/bulk-update", priceController.bulkUpdatePrices);
 
-// /* =====================================================
-//    COPY PRODUCT (STATIC ROUTE)
-// ===================================================== */
+// // Copy
 // router.post("/copy/:id", priceController.copyPrice);
 
-// /* =====================================================
-//    GET ALL PRICES (ADMIN PANEL)
-// ===================================================== */
+// // Admin list
 // router.get("/", priceController.getPrices);
 
-// /* =====================================================
-//    CREATE PRICE
-// ===================================================== */
+// // Create
 // router.post("/", upload.single("file"), priceController.createPrice);
 
-// /* =====================================================
-//    IMPORT CSV
-// ===================================================== */
+// // Import CSV
 // router.post("/import", upload.single("file"), priceController.importPrices);
 
-// /* =====================================================
-//    EXPORT CSV
-// ===================================================== */
+// // Export CSV
 // router.get("/export", priceController.exportPrices);
 
-// /* =====================================================
-//    UPDATE PRICE (DYNAMIC ROUTE)
-// ===================================================== */
+// // Update
 // router.put("/:id", upload.single("file"), priceController.updatePrice);
 
-// /* =====================================================
-//    DELETE PRICE (DYNAMIC ROUTE)
-// ===================================================== */
+// // Delete
 // router.delete("/:id", priceController.deletePrice);
 
 // module.exports = router;
-
 
 const express = require("express");
 const router = express.Router();
@@ -98,19 +139,19 @@ const upload = multer({ storage });
 
 const priceController = require("../controllers/priceController");
 
-// Website
+// Website API
 router.get("/website", priceController.getWebsitePrices);
 
-// Status
+// Status update
 router.put("/status/:id", priceController.updateStatus);
 
 // Bulk update
 router.post("/bulk-update", priceController.bulkUpdatePrices);
 
-// Copy
+// Copy product
 router.post("/copy/:id", priceController.copyPrice);
 
-// Admin list
+// Get all products
 router.get("/", priceController.getPrices);
 
 // Create

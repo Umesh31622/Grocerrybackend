@@ -365,6 +365,391 @@
 //   }
 // };
 
+// const Price = require("../models/priceModel");
+// const Category = require("../models/categoryModel");
+// const cloudinary = require("../utils/cloudinary");
+// const csv = require("fast-csv");
+
+// // CLOUDINARY UPLOAD
+// const uploadToCloudinary = (fileBuffer) => {
+//   return new Promise((resolve, reject) => {
+//     cloudinary.uploader
+//       .upload_stream({ folder: "price_images" }, (err, result) => {
+//         if (err) reject(err);
+//         else resolve(result.secure_url);
+//       })
+//       .end(fileBuffer);
+//   });
+// };
+
+// // STATUS LOGIC
+// function getStatusByValidTill(validTill) {
+//   if (!validTill) return "inactive";
+
+//   const now = new Date();
+//   const vt = new Date(validTill);
+//   const todayStr = now.toDateString();
+
+//   if (vt < new Date(todayStr)) return "inactive";
+
+//   const hour = now.getHours();
+//   return hour >= 8 && hour <= 23 ? "active" : "inactive";
+// }
+
+// // AUTO EXPIRE
+// async function autoExpirePrices() {
+//   const prices = await Price.find();
+
+//   for (const p of prices) {
+//     const newStatus = getStatusByValidTill(p.validTill);
+//     if (p.status !== newStatus) {
+//       await Price.findByIdAndUpdate(p._id, { status: newStatus });
+//     }
+//   }
+// }
+
+// /* ------------------------------------------------------------------
+//    CREATE PRICE
+// ------------------------------------------------------------------- */
+// exports.createPrice = async (req, res) => {
+//   try {
+//     const {
+//       name,
+//       category,
+//       subcategory,
+//       basePrice,
+//       difference,
+//       validTill,
+//       description,
+//     } = req.body;
+
+//     let imageUrl = null;
+//     if (req.file) {
+//       imageUrl = await uploadToCloudinary(req.file.buffer);
+//     }
+
+//     const finalStatus = getStatusByValidTill(validTill);
+
+//     const price = await Price.create({
+//       name,
+//       category,
+//       subcategory: subcategory || null,
+//       basePrice: parseFloat(basePrice),
+//       difference: parseFloat(difference) || 0,
+//       validTill: validTill ? new Date(validTill) : undefined,
+//       description,
+//       status: finalStatus,
+//       image: imageUrl,
+//     });
+
+//     const populated = await Price.findById(price._id)
+//       .populate("category", "name")
+//       .populate("subcategory", "name");
+
+//     res.status(201).json({ success: true, data: populated });
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
+
+// /* ------------------------------------------------------------------
+//    GET ALL (ADMIN)
+// ------------------------------------------------------------------- */
+// exports.getPrices = async (req, res) => {
+//   try {
+//     await autoExpirePrices();
+
+//     const prices = await Price.find()
+//       .populate("category", "name")
+//       .populate("subcategory", "name")
+//       .sort({ createdAt: -1 });
+
+//     const data = prices.map((p) => ({
+//       ...p._doc,
+//       finalPrice: p.basePrice + (p.difference || 0),
+//     }));
+
+//     res.json({ success: true, data });
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
+
+// /* ------------------------------------------------------------------
+//    WEBSITE API
+// ------------------------------------------------------------------- */
+// // exports.getWebsitePrices = async (req, res) => {
+// //   try {
+// //     const now = new Date();
+// //     const today = new Date(now.toDateString());
+// //     const hour = now.getHours();
+// //     const isTime = hour >= 8 && hour <= 23;
+
+// //     const prices = await Price.find({
+// //       validTill: { $gte: today }
+// //     })
+// //       .populate("category", "name")
+// //       .populate("subcategory", "name")
+// //       .sort({ createdAt: -1 });
+
+// //     const data = prices.map((p) => {
+// //       const finalAmt = p.basePrice + (p.difference || 0);
+// //       return {
+// //         ...p._doc,
+// //         finalPrice: isTime ? finalAmt : null,
+// //         status: isTime ? "active" : "inactive",
+// //       };
+// //     });
+
+// //     res.json({ success: true, data });
+// //   } catch (err) {
+// //     res.status(500).json({ success: false, message: err.message });
+// //   }
+// // };
+// exports.getWebsitePrices = async (req, res) => {
+//   try {
+//     // Sirf ACTIVE products hi website ko do
+//     const prices = await Price.find({ status: "active" })
+//       .populate("category", "name")
+//       .populate("subcategory", "name")
+//       .sort({ createdAt: -1 });
+
+//     // Final price add
+//     const data = prices.map((p) => ({
+//       ...p._doc,
+//       finalPrice: p.basePrice + (p.difference || 0),
+//     }));
+
+//     res.json({ success: true, data });
+
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
+// /* ------------------------------------------------------------------
+//    UPDATE PRICE
+// ------------------------------------------------------------------- */
+// exports.updatePrice = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const {
+//       name,
+//       category,
+//       subcategory,
+//       basePrice,
+//       difference,
+//       validTill,
+//       description,
+//     } = req.body;
+
+//     const updateData = {
+//       name,
+//       category,
+//       subcategory: subcategory || null,
+//       basePrice: parseFloat(basePrice),
+//       difference: parseFloat(difference) || 0,
+//       validTill: validTill ? new Date(validTill) : undefined,
+//       description,
+//       status: getStatusByValidTill(validTill),
+//     };
+
+//     if (req.file) {
+//       updateData.image = await uploadToCloudinary(req.file.buffer);
+//     }
+
+//     const updated = await Price.findByIdAndUpdate(id, updateData, {
+//       new: true,
+//     })
+//       .populate("category", "name")
+//       .populate("subcategory", "name");
+
+//     res.json({ success: true, data: updated });
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
+
+// /* ------------------------------------------------------------------
+//    UPDATE STATUS
+// ------------------------------------------------------------------- */
+// exports.updateStatus = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     const updated = await Price.findByIdAndUpdate(
+//       id,
+//       { status: req.body.status },
+//       { new: true }
+//     )
+//       .populate("category", "name")
+//       .populate("subcategory", "name");
+
+//     res.json({ success: true, data: updated });
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
+
+// /* ------------------------------------------------------------------
+//    DELETE PRICE
+// ------------------------------------------------------------------- */
+// exports.deletePrice = async (req, res) => {
+//   try {
+//     await Price.findByIdAndDelete(req.params.id);
+//     res.json({ success: true });
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
+
+// /* ------------------------------------------------------------------
+//    CSV IMPORT
+// ------------------------------------------------------------------- */
+// exports.importPrices = async (req, res) => {
+//   try {
+//     if (!req.file)
+//       return res.status(400).json({ success: false, message: "CSV required" });
+
+//     const rows = [];
+//     const csvData = req.file.buffer.toString("utf-8");
+
+//     csv
+//       .parseString(csvData, { headers: true })
+//       .on("data", (row) => rows.push(row))
+//       .on("end", async () => {
+//         const inserted = [];
+
+//         for (const r of rows) {
+//           const catName = r.categoryName?.trim() || "Uncategorized";
+//           const subName = r.subcategoryName?.trim() || null;
+
+//           let category = await Category.findOne({ name: catName });
+//           if (!category) category = await Category.create({ name: catName });
+
+//           let subcategoryId = null;
+
+//           // find subcategory if exists
+//           if (subName) {
+//             const sub = category.subcategories.find(
+//               (s) => s.name.toLowerCase() === subName.toLowerCase()
+//             );
+//             if (sub) subcategoryId = sub._id;
+//           }
+
+//           const price = await Price.create({
+//             name: r.name,
+//             category: category._id,
+//             subcategory: subcategoryId,
+//             basePrice: Number(r.basePrice),
+//             difference: Number(r.difference),
+//             validTill: r.validTill ? new Date(r.validTill) : undefined,
+//             status: getStatusByValidTill(r.validTill),
+//           });
+
+//           inserted.push(price);
+//         }
+
+//         res.json({ success: true, inserted: inserted.length });
+//       });
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
+
+// /* ------------------------------------------------------------------
+//    CSV EXPORT (ALL)
+// ------------------------------------------------------------------- */
+// exports.exportPrices = async (req, res) => {
+//   try {
+//     const prices = await Price.find()
+//       .populate("category", "name")
+//       .populate("subcategory", "name");
+
+//     res.setHeader("Content-Disposition", "attachment; filename=prices.csv");
+//     res.setHeader("Content-Type", "text/csv");
+
+//     const csvStream = csv.format({ headers: true });
+//     csvStream.pipe(res);
+
+//     for (const p of prices) {
+//       csvStream.write({
+//         name: p.name,
+//         categoryName: p.category?.name || "",
+//         subcategoryName: p.subcategory?.name || "",
+//         basePrice: p.basePrice,
+//         difference: p.difference,
+//         finalPrice: p.basePrice + p.difference,
+//         status: p.status,
+//         validTill: p.validTill
+//           ? p.validTill.toISOString().split("T")[0]
+//           : "",
+//         description: p.description,
+//         imageUrl: p.image || "",
+//       });
+//     }
+
+//     csvStream.end();
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
+
+// /* ------------------------------------------------------------------
+//    BULK UPDATE (FIXED)
+// ------------------------------------------------------------------- */
+// exports.bulkUpdatePrices = async (req, res) => {
+//   try {
+//     const { products } = req.body;
+
+//     const updated = [];
+
+//     for (const p of products) {
+//       const u = await Price.findByIdAndUpdate(
+//         p.id,
+//         {
+//           name: p.name,
+//           basePrice: p.basePrice,
+//           difference: p.difference,
+//           validTill: p.validTill,
+//           status: getStatusByValidTill(p.validTill),
+//         },
+//         { new: true }
+//       );
+
+//       updated.push(u);
+//     }
+
+//     res.json({ success: true, updated });
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
+
+// /* ------------------------------------------------------------------
+//    COPY PRODUCT
+// ------------------------------------------------------------------- */
+// exports.copyPrice = async (req, res) => {
+//   try {
+//     const item = await Price.findById(req.params.id);
+
+//     const newPrice = await Price.create({
+//       name: item.name,
+//       category: item.category,
+//       subcategory: item.subcategory,
+//       basePrice: item.basePrice,
+//       difference: item.difference,
+//       validTill: item.validTill,
+//       description: item.description,
+//       status: item.status,
+//       image: null,
+//     });
+
+//     res.json({ success: true, data: newPrice });
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
+
 const Price = require("../models/priceModel");
 const Category = require("../models/categoryModel");
 const cloudinary = require("../utils/cloudinary");
@@ -382,34 +767,8 @@ const uploadToCloudinary = (fileBuffer) => {
   });
 };
 
-// STATUS LOGIC
-function getStatusByValidTill(validTill) {
-  if (!validTill) return "inactive";
-
-  const now = new Date();
-  const vt = new Date(validTill);
-  const todayStr = now.toDateString();
-
-  if (vt < new Date(todayStr)) return "inactive";
-
-  const hour = now.getHours();
-  return hour >= 8 && hour <= 23 ? "active" : "inactive";
-}
-
-// AUTO EXPIRE
-async function autoExpirePrices() {
-  const prices = await Price.find();
-
-  for (const p of prices) {
-    const newStatus = getStatusByValidTill(p.validTill);
-    if (p.status !== newStatus) {
-      await Price.findByIdAndUpdate(p._id, { status: newStatus });
-    }
-  }
-}
-
 /* ------------------------------------------------------------------
-   CREATE PRICE
+   CREATE PRICE (Manual Status)
 ------------------------------------------------------------------- */
 exports.createPrice = async (req, res) => {
   try {
@@ -421,14 +780,13 @@ exports.createPrice = async (req, res) => {
       difference,
       validTill,
       description,
+      status
     } = req.body;
 
     let imageUrl = null;
     if (req.file) {
       imageUrl = await uploadToCloudinary(req.file.buffer);
     }
-
-    const finalStatus = getStatusByValidTill(validTill);
 
     const price = await Price.create({
       name,
@@ -438,7 +796,7 @@ exports.createPrice = async (req, res) => {
       difference: parseFloat(difference) || 0,
       validTill: validTill ? new Date(validTill) : undefined,
       description,
-      status: finalStatus,
+      status: status || "inactive", // 👈 manual status
       image: imageUrl,
     });
 
@@ -453,12 +811,10 @@ exports.createPrice = async (req, res) => {
 };
 
 /* ------------------------------------------------------------------
-   GET ALL (ADMIN)
+   GET ALL (Admin)
 ------------------------------------------------------------------- */
 exports.getPrices = async (req, res) => {
   try {
-    await autoExpirePrices();
-
     const prices = await Price.find()
       .populate("category", "name")
       .populate("subcategory", "name")
@@ -476,45 +832,15 @@ exports.getPrices = async (req, res) => {
 };
 
 /* ------------------------------------------------------------------
-   WEBSITE API
+   WEBSITE API (Only Active Products)
 ------------------------------------------------------------------- */
-// exports.getWebsitePrices = async (req, res) => {
-//   try {
-//     const now = new Date();
-//     const today = new Date(now.toDateString());
-//     const hour = now.getHours();
-//     const isTime = hour >= 8 && hour <= 23;
-
-//     const prices = await Price.find({
-//       validTill: { $gte: today }
-//     })
-//       .populate("category", "name")
-//       .populate("subcategory", "name")
-//       .sort({ createdAt: -1 });
-
-//     const data = prices.map((p) => {
-//       const finalAmt = p.basePrice + (p.difference || 0);
-//       return {
-//         ...p._doc,
-//         finalPrice: isTime ? finalAmt : null,
-//         status: isTime ? "active" : "inactive",
-//       };
-//     });
-
-//     res.json({ success: true, data });
-//   } catch (err) {
-//     res.status(500).json({ success: false, message: err.message });
-//   }
-// };
 exports.getWebsitePrices = async (req, res) => {
   try {
-    // Sirf ACTIVE products hi website ko do
     const prices = await Price.find({ status: "active" })
       .populate("category", "name")
       .populate("subcategory", "name")
       .sort({ createdAt: -1 });
 
-    // Final price add
     const data = prices.map((p) => ({
       ...p._doc,
       finalPrice: p.basePrice + (p.difference || 0),
@@ -526,8 +852,9 @@ exports.getWebsitePrices = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
 /* ------------------------------------------------------------------
-   UPDATE PRICE
+   UPDATE PRICE (Manual Status)
 ------------------------------------------------------------------- */
 exports.updatePrice = async (req, res) => {
   try {
@@ -540,6 +867,7 @@ exports.updatePrice = async (req, res) => {
       difference,
       validTill,
       description,
+      status
     } = req.body;
 
     const updateData = {
@@ -550,7 +878,7 @@ exports.updatePrice = async (req, res) => {
       difference: parseFloat(difference) || 0,
       validTill: validTill ? new Date(validTill) : undefined,
       description,
-      status: getStatusByValidTill(validTill),
+      status, // 👈 fixed
     };
 
     if (req.file) {
@@ -570,7 +898,7 @@ exports.updatePrice = async (req, res) => {
 };
 
 /* ------------------------------------------------------------------
-   UPDATE STATUS
+   UPDATE STATUS (Toggle Button)
 ------------------------------------------------------------------- */
 exports.updateStatus = async (req, res) => {
   try {
@@ -591,7 +919,7 @@ exports.updateStatus = async (req, res) => {
 };
 
 /* ------------------------------------------------------------------
-   DELETE PRICE
+ DELETE PRICE
 ------------------------------------------------------------------- */
 exports.deletePrice = async (req, res) => {
   try {
@@ -603,7 +931,7 @@ exports.deletePrice = async (req, res) => {
 };
 
 /* ------------------------------------------------------------------
-   CSV IMPORT
+ CSV IMPORT
 ------------------------------------------------------------------- */
 exports.importPrices = async (req, res) => {
   try {
@@ -628,7 +956,6 @@ exports.importPrices = async (req, res) => {
 
           let subcategoryId = null;
 
-          // find subcategory if exists
           if (subName) {
             const sub = category.subcategories.find(
               (s) => s.name.toLowerCase() === subName.toLowerCase()
@@ -643,7 +970,7 @@ exports.importPrices = async (req, res) => {
             basePrice: Number(r.basePrice),
             difference: Number(r.difference),
             validTill: r.validTill ? new Date(r.validTill) : undefined,
-            status: getStatusByValidTill(r.validTill),
+            status: r.status || "inactive", // 👈 CSV also controlled
           });
 
           inserted.push(price);
@@ -657,7 +984,7 @@ exports.importPrices = async (req, res) => {
 };
 
 /* ------------------------------------------------------------------
-   CSV EXPORT (ALL)
+ CSV EXPORT
 ------------------------------------------------------------------- */
 exports.exportPrices = async (req, res) => {
   try {
@@ -695,7 +1022,7 @@ exports.exportPrices = async (req, res) => {
 };
 
 /* ------------------------------------------------------------------
-   BULK UPDATE (FIXED)
+ BULK UPDATE
 ------------------------------------------------------------------- */
 exports.bulkUpdatePrices = async (req, res) => {
   try {
@@ -711,7 +1038,7 @@ exports.bulkUpdatePrices = async (req, res) => {
           basePrice: p.basePrice,
           difference: p.difference,
           validTill: p.validTill,
-          status: getStatusByValidTill(p.validTill),
+          status: p.status, // 👈 FIXED
         },
         { new: true }
       );
@@ -726,7 +1053,7 @@ exports.bulkUpdatePrices = async (req, res) => {
 };
 
 /* ------------------------------------------------------------------
-   COPY PRODUCT
+ COPY PRODUCT
 ------------------------------------------------------------------- */
 exports.copyPrice = async (req, res) => {
   try {
@@ -740,7 +1067,7 @@ exports.copyPrice = async (req, res) => {
       difference: item.difference,
       validTill: item.validTill,
       description: item.description,
-      status: item.status,
+      status: item.status, // copy same status
       image: null,
     });
 

@@ -478,35 +478,54 @@ exports.getPrices = async (req, res) => {
 /* ------------------------------------------------------------------
    WEBSITE API
 ------------------------------------------------------------------- */
+// exports.getWebsitePrices = async (req, res) => {
+//   try {
+//     const now = new Date();
+//     const today = new Date(now.toDateString());
+//     const hour = now.getHours();
+//     const isTime = hour >= 8 && hour <= 23;
+
+//     const prices = await Price.find({
+//       validTill: { $gte: today }
+//     })
+//       .populate("category", "name")
+//       .populate("subcategory", "name")
+//       .sort({ createdAt: -1 });
+
+//     const data = prices.map((p) => {
+//       const finalAmt = p.basePrice + (p.difference || 0);
+//       return {
+//         ...p._doc,
+//         finalPrice: isTime ? finalAmt : null,
+//         status: isTime ? "active" : "inactive",
+//       };
+//     });
+
+//     res.json({ success: true, data });
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
 exports.getWebsitePrices = async (req, res) => {
   try {
-    const now = new Date();
-    const today = new Date(now.toDateString());
-    const hour = now.getHours();
-    const isTime = hour >= 8 && hour <= 23;
-
-    const prices = await Price.find({
-      validTill: { $gte: today }
-    })
+    // Sirf ACTIVE products hi website ko do
+    const prices = await Price.find({ status: "active" })
       .populate("category", "name")
       .populate("subcategory", "name")
       .sort({ createdAt: -1 });
 
-    const data = prices.map((p) => {
-      const finalAmt = p.basePrice + (p.difference || 0);
-      return {
-        ...p._doc,
-        finalPrice: isTime ? finalAmt : null,
-        status: isTime ? "active" : "inactive",
-      };
-    });
+    // Final price add
+    const data = prices.map((p) => ({
+      ...p._doc,
+      finalPrice: p.basePrice + (p.difference || 0),
+    }));
 
     res.json({ success: true, data });
+
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
-
 /* ------------------------------------------------------------------
    UPDATE PRICE
 ------------------------------------------------------------------- */
@@ -730,4 +749,5 @@ exports.copyPrice = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
 

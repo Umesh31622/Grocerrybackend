@@ -48,7 +48,6 @@ app.use("/api/prices", priceRoutes); // ✅ Price CRUD Routes
 app.use("/api/categories", categoryRoutes);
 app.use("/api/price-report", priceReportRoutes);
 app.use("/api/descriptions", require("./routes/descriptionRoutes"));
-app.use("/api/history", require("./routes/historyRoutes"));
 // ===== HEALTH CHECK ROUTE =====
 app.get("/", (req, res) => {
   res.send("🚀 Server running successfully");
@@ -66,7 +65,8 @@ app.use((err, req, res, next) => {
 });
 
 // ===== SERVER START =====
+// ===== SERVER START =====
 const PORT = process.env.PORT || 7000;
 app.listen(PORT, () =>
-  console.log(🌐 Server running on port ${PORT}...)
+  console.log(`🌐 Server running on port ${PORT}...`)
 );

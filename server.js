@@ -48,6 +48,7 @@ app.use("/api/prices", priceRoutes); // ✅ Price CRUD Routes
 app.use("/api/categories", categoryRoutes);
 app.use("/api/price-report", priceReportRoutes);
 app.use("/api/descriptions", require("./routes/descriptionRoutes"));
+app.use("/api/history", require("./routes/historyRoutes"));
 // ===== HEALTH CHECK ROUTE =====
 app.get("/", (req, res) => {
   res.send("🚀 Server running successfully");

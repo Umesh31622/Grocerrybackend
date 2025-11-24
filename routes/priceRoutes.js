@@ -80,6 +80,7 @@
 
 // module.exports = router;
 
+
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
@@ -123,3 +124,4 @@ router.put("/:id", upload.single("file"), priceController.updatePrice);
 router.delete("/:id", priceController.deletePrice);
 
 module.exports = router;
+

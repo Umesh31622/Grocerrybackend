@@ -85,7 +85,6 @@
 // // module.exports =
 // //   mongoose.models.Price || mongoose.model("Price", priceSchema);
 
-
 // const mongoose = require("mongoose");
 
 // const priceSchema = new mongoose.Schema({
@@ -126,34 +125,74 @@
 // module.exports =
 //   mongoose.models.Price || mongoose.model("Price", priceSchema);
 
+// const mongoose = require("mongoose");
 
+// const priceSchema = new mongoose.Schema({
+//   name: { type: String, required: true },
 
+//   // CATEGORY IS REF → populate allowed
+//   category: {
+//     type: mongoose.Schema.Types.ObjectId,
+//     ref: "Category",
+//     required: true
+//   },
+
+//   // SUBCATEGORY AS EMBEDDED OBJECT (NO populate)
+//   subcategory: {
+//     id: { type: String, default: null },
+//     name: { type: String, default: null },
+//     image: { type: String, default: null }
+//   },
+
+//   // BASE PRICE (editable)
+//   basePrice: { type: Number, required: true },
+
+//   // LOGIC FIELDS
+//   lastFinalPrice: { type: Number, default: 0 },
+//   todayDiff: { type: Number, default: 0 },
+//   currentFinalPrice: { type: Number, default: 0 },
+
+//   validTill: { type: Date },
+//   description: { type: String },
+//   image: { type: String },
+
+//   status: {
+//     type: String,
+//     enum: ["active", "inactive"],
+//     default: "inactive"
+//   },
+
+//   createdAt: { type: Date, default: Date.now },
+// });
+
+// module.exports =
+//   mongoose.models.Price || mongoose.model("Price", priceSchema);
 const mongoose = require("mongoose");
 
 const priceSchema = new mongoose.Schema({
   name: { type: String, required: true },
 
-  // CATEGORY IS REF → populate allowed
+  // CATEGORY REF
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Category",
     required: true
   },
 
-  // SUBCATEGORY AS EMBEDDED OBJECT (NO populate)
+  // SUBCATEGORY OBJECT (frontend-friendly)
   subcategory: {
     id: { type: String, default: null },
     name: { type: String, default: null },
     image: { type: String, default: null }
   },
 
-  // BASE PRICE (editable)
+  // BASE PRICE
   basePrice: { type: Number, required: true },
 
   // LOGIC FIELDS
-  lastFinalPrice: { type: Number, default: 0 },
-  todayDiff: { type: Number, default: 0 },
-  currentFinalPrice: { type: Number, default: 0 },
+  lastFinalPrice: { type: Number, default: 0 },    // yesterday
+  todayDiff: { type: Number, default: 0 },         // today difference
+  currentFinalPrice: { type: Number, default: 0 }, // base + diff
 
   validTill: { type: Date },
   description: { type: String },

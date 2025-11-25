@@ -1,3 +1,44 @@
+// // // const express = require("express");
+// // // const router = express.Router();
+// // // const multer = require("multer");
+
+// // // const storage = multer.memoryStorage();
+// // // const upload = multer({ storage });
+
+// // // const priceController = require("../controllers/priceController");
+
+// // // // Website API
+// // // router.get("/website", priceController.getWebsitePrices);
+
+// // // // Status update
+// // // router.put("/status/:id", priceController.updateStatus);
+
+// // // // Bulk update
+// // // router.post("/bulk-update", priceController.bulkUpdatePrices);
+
+// // // // Copy product
+// // // router.post("/copy/:id", priceController.copyPrice);
+
+// // // // Get all products
+// // // router.get("/", priceController.getPrices);
+
+// // // // Create
+// // // router.post("/", upload.single("file"), priceController.createPrice);
+
+// // // // Import CSV
+// // // router.post("/import", upload.single("file"), priceController.importPrices);
+
+// // // // Export CSV
+// // // router.get("/export", priceController.exportPrices);
+
+// // // // Update
+// // // router.put("/:id", upload.single("file"), priceController.updatePrice);
+
+// // // // Delete
+// // // router.delete("/:id", priceController.deletePrice);
+
+// // // module.exports = router;
+
 // // const express = require("express");
 // // const router = express.Router();
 // // const multer = require("multer");
@@ -39,6 +80,7 @@
 
 // // module.exports = router;
 
+
 // const express = require("express");
 // const router = express.Router();
 // const multer = require("multer");
@@ -59,6 +101,9 @@
 
 // // Copy product
 // router.post("/copy/:id", priceController.copyPrice);
+
+// // Update DIFF (VERY IMPORTANT)
+// router.put("/updateDiff/:id", priceController.updateDiff);
 
 // // Get all products
 // router.get("/", priceController.getPrices);
@@ -81,6 +126,7 @@
 // module.exports = router;
 
 
+
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
@@ -90,38 +136,37 @@ const upload = multer({ storage });
 
 const priceController = require("../controllers/priceController");
 
-// Website API
+// WEBSITE API (only active)
 router.get("/website", priceController.getWebsitePrices);
 
-// Status update
+// STATUS update
 router.put("/status/:id", priceController.updateStatus);
 
-// Bulk update
+// BULK update
 router.post("/bulk-update", priceController.bulkUpdatePrices);
 
-// Copy product
+// COPY product
 router.post("/copy/:id", priceController.copyPrice);
 
-// Update DIFF (VERY IMPORTANT)
+// UPDATE DIFF (VERY IMPORTANT)
 router.put("/updateDiff/:id", priceController.updateDiff);
 
-// Get all products
+// GET ALL products
 router.get("/", priceController.getPrices);
 
-// Create
+// CREATE price
 router.post("/", upload.single("file"), priceController.createPrice);
 
-// Import CSV
+// CSV IMPORT
 router.post("/import", upload.single("file"), priceController.importPrices);
 
-// Export CSV
+// CSV EXPORT
 router.get("/export", priceController.exportPrices);
 
-// Update
+// UPDATE price
 router.put("/:id", upload.single("file"), priceController.updatePrice);
 
-// Delete
+// DELETE price
 router.delete("/:id", priceController.deletePrice);
 
 module.exports = router;
-

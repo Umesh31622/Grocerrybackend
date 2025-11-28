@@ -1510,7 +1510,8 @@ exports.updateDiff = async (req, res) => {
     if (!item)
       return res.status(404).json({ success: false, message: "Not found" });
 
-    item.profitLoss = item.profitLoss + diff;
+    
+    item.profitLoss = diff; 
     item.salePrice = item.basePrice + item.profitLoss;
 
     await item.save();
@@ -1730,3 +1731,4 @@ schedule.scheduleJob("0 0 * * *", async () => {
     console.error("Midnight Error:", err);
   }
 });
+

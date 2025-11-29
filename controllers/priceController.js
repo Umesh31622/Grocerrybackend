@@ -2025,7 +2025,6 @@ exports.importPrices = async (req, res) => {
             salePrice: Number(r.basePrice) + Number(r.profitLoss),
 
             lockedPrice: 0,
-            yesterdayLock: 0,
             brokerDisplay: 0,
 
             description: r.description || "",
@@ -2063,7 +2062,7 @@ exports.exportPrices = async (req, res) => {
         profitLoss: p.profitLoss,
         salePrice: p.salePrice,
         lockedPrice: p.lockedPrice,
-        yesterdayLock: p.yesterdayLock,
+        
         brokerDisplay: p.brokerDisplay,
         status: p.status,
         description: p.description,
@@ -2106,3 +2105,4 @@ schedule.scheduleJob("0 0 * * *", async () => {
     console.error("Midnight Error:", err);
   }
 });
+

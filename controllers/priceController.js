@@ -2111,8 +2111,11 @@ const Price = require("../models/priceModel");
 const Category = require("../models/categoryModel");
 const cloudinary = require("../utils/cloudinary");
 const csv = require("fast-csv");
+const schedule = require("node-schedule");
 
-/* CLOUDINARY UPLOAD */
+/* ============================================================
+   CLOUDINARY UPLOAD
+============================================================ */
 const uploadToCloudinary = (fileBuffer) => {
   return new Promise((resolve, reject) => {
     cloudinary.uploader
@@ -2125,18 +2128,55 @@ const uploadToCloudinary = (fileBuffer) => {
 };
 
 /* ============================================================
+   AUTO LOCK FUNCTION (FOR VERCEL)
+============================================================ */
+async function runDailyLock() {
+  const items = await Price.find();
+
+  for (const p of items) {
+    const yesterday = p.lockedPrice;
+    const todayLock = p.salePrice;
+
+    p.yesterdayLock = yesterday;
+    p.lockedPrice = todayLock;
+
+    if (yesterday === 0) {
+      p.brokerDisplay = 0;
+    } else {
+      p.brokerDisplay = todayLock - yesterday;
+    }
+
+    await p.save();
+  }
+
+  console.log("🔁 Auto Lock Executed (Vercel Safe Mode)");
+}
+
+/* ============================================================
+   GET ALL (AUTO-LOCK INCLUDED)
+============================================================ */
+exports.getPrices = async (req, res) => {
+  try {
+    await runDailyLock(); // Vercel safe auto-lock
+
+    const prices = await Price.find()
+      .populate("category", "name")
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, data: prices });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/* ============================================================
    CREATE PRICE
 ============================================================ */
 exports.createPrice = async (req, res) => {
   try {
     const {
-      name,
-      category,
-      subcategory,
-      basePrice,
-      profitLoss,
-      description,
-      status,
+      name, category, subcategory,
+      basePrice, profitLoss, description, status
     } = req.body;
 
     let imageUrl = null;
@@ -2147,8 +2187,7 @@ exports.createPrice = async (req, res) => {
     const sale = base + pl;
 
     const price = await Price.create({
-      name,
-      category,
+      name, category,
       subcategory: subcategory || null,
       basePrice: base,
       profitLoss: pl,
@@ -2157,8 +2196,6 @@ exports.createPrice = async (req, res) => {
       lockedPrice: 0,
       yesterdayLock: 0,
       brokerDisplay: 0,
-
-      lastLockDate: "",
 
       description,
       status,
@@ -2176,52 +2213,12 @@ exports.createPrice = async (req, res) => {
 };
 
 /* ============================================================
-   GET ALL — AUTO-LOCK LOGIC (VERCEL SAFE)
-============================================================ */
-exports.getPrices = async (req, res) => {
-  try {
-    const today = new Date().toISOString().split("T")[0];
-
-    const sample = await Price.findOne();
-
-    // ⭐ DAILY AUTO UPDATE LOGIC
-    if (sample && sample.lastLockDate !== today) {
-      console.log("🔁 Auto Daily Lock Triggered…");
-
-      const items = await Price.find();
-
-      for (const p of items) {
-        const yesterday = p.lockedPrice;
-        const todayLock = p.salePrice;
-
-        p.yesterdayLock = yesterday;
-        p.lockedPrice = todayLock;
-
-        p.brokerDisplay = yesterday === 0 ? 0 : todayLock - yesterday;
-
-        p.lastLockDate = today;
-
-        await p.save();
-      }
-
-      console.log("✅ Daily Auto Lock Update Completed");
-    }
-
-    const prices = await Price.find()
-      .populate("category", "name")
-      .sort({ createdAt: -1 });
-
-    res.json({ success: true, data: prices });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
-
-/* ============================================================
    WEBSITE ACTIVE API
 ============================================================ */
 exports.getWebsitePrices = async (req, res) => {
   try {
+    await runDailyLock();
+
     const prices = await Price.find({ status: "active" })
       .populate("category", "name")
       .sort({ createdAt: -1 });
@@ -2233,7 +2230,7 @@ exports.getWebsitePrices = async (req, res) => {
 };
 
 /* ============================================================
-   UPDATE (BASE PRICE + PROFIT LOSS)
+   UPDATE PRICE
 ============================================================ */
 exports.updatePrice = async (req, res) => {
   try {
@@ -2241,14 +2238,12 @@ exports.updatePrice = async (req, res) => {
     const body = req.body;
 
     let item = await Price.findById(id);
-    if (!item)
-      return res.status(404).json({ success: false, message: "Not found" });
+    if (!item) return res.status(404).json({ success: false, message: "Not found" });
 
-    if (req.file) body.image = await uploadToCloudinary(req.file.buffer);
+    if (req.file) item.image = await uploadToCloudinary(req.file.buffer);
 
     if (body.basePrice !== undefined) item.basePrice = Number(body.basePrice);
-    if (body.profitLoss !== undefined)
-      item.profitLoss = Number(body.profitLoss);
+    if (body.profitLoss !== undefined) item.profitLoss = Number(body.profitLoss);
 
     item.salePrice = item.basePrice + item.profitLoss;
 
@@ -2266,7 +2261,7 @@ exports.updatePrice = async (req, res) => {
 };
 
 /* ============================================================
-   QUICK UPDATE PROFIT/LOSS
+   QUICK PROFIT/LOSS UPDATE
 ============================================================ */
 exports.updateDiff = async (req, res) => {
   try {
@@ -2278,7 +2273,7 @@ exports.updateDiff = async (req, res) => {
       return res.status(404).json({ success: false, message: "Not found" });
 
     item.profitLoss = diff;
-    item.salePrice = item.basePrice + item.profitLoss;
+    item.salePrice = item.basePrice + diff;
 
     await item.save();
 
@@ -2290,7 +2285,7 @@ exports.updateDiff = async (req, res) => {
 };
 
 /* ============================================================
-   STATUS CHANGE
+   STATUS UPDATE
 ============================================================ */
 exports.updateStatus = async (req, res) => {
   try {
@@ -2307,57 +2302,12 @@ exports.updateStatus = async (req, res) => {
 };
 
 /* ============================================================
-   DELETE SINGLE
+   DELETE PRICE
 ============================================================ */
 exports.deletePrice = async (req, res) => {
   try {
     await Price.findByIdAndDelete(req.params.id);
     res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
-
-/* ============================================================
-   DELETE SELECTED
-============================================================ */
-exports.deleteSelected = async (req, res) => {
-  try {
-    const { ids } = req.body;
-    await Price.deleteMany({ _id: { $in: ids } });
-    res.json({ success: true, deleted: ids.length });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
-
-/* ============================================================
-   COPY PRODUCT
-============================================================ */
-exports.copyPrice = async (req, res) => {
-  try {
-    const item = await Price.findById(req.params.id);
-    if (!item) return res.json({ success: false });
-
-    const newItem = await Price.create({
-      name: item.name,
-      category: item.category,
-      subcategory: item.subcategory,
-      basePrice: item.basePrice,
-      profitLoss: item.profitLoss,
-      salePrice: item.salePrice,
-
-      lockedPrice: 0,
-      yesterdayLock: 0,
-      brokerDisplay: 0,
-      lastLockDate: "",
-
-      status: item.status,
-      description: item.description,
-      image: null,
-    });
-
-    res.json({ success: true, data: newItem });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -2376,8 +2326,7 @@ exports.bulkUpdatePrices = async (req, res) => {
       if (!item) continue;
 
       if (p.basePrice !== undefined) item.basePrice = Number(p.basePrice);
-      if (p.profitLoss !== undefined)
-        item.profitLoss = Number(p.profitLoss);
+      if (p.profitLoss !== undefined) item.profitLoss = Number(p.profitLoss);
 
       item.salePrice = item.basePrice + item.profitLoss;
       if (p.status) item.status = p.status;
@@ -2393,37 +2342,14 @@ exports.bulkUpdatePrices = async (req, res) => {
 };
 
 /* ============================================================
-   CSV EXPORT
+   MIDNIGHT SERVER LOCK (FOR LOCAL SERVER ONLY)
 ============================================================ */
-exports.exportPrices = async (req, res) => {
+schedule.scheduleJob("0 0 * * *", async () => {
   try {
-    const prices = await Price.find().populate("category", "name");
-
-    res.setHeader("Content-Disposition", "attachment; filename=prices.csv");
-    res.setHeader("Content-Type", "text/csv");
-
-    const csvStream = csv.format({ headers: true });
-    csvStream.pipe(res);
-
-    for (const p of prices) {
-      csvStream.write({
-        id: p._id,
-        name: p.name,
-        categoryName: p.category?.name || "",
-        basePrice: p.basePrice,
-        profitLoss: p.profitLoss,
-        salePrice: p.salePrice,
-        lockedPrice: p.lockedPrice,
-        yesterdayLock: p.yesterdayLock,
-        brokerDisplay: p.brokerDisplay,
-        status: p.status,
-        description: p.description,
-        imageUrl: p.image,
-      });
-    }
-
-    csvStream.end();
+    await runDailyLock();
+    console.log("🌙 Midnight Lock Executed (Server Mode)");
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error("Midnight Error:", err);
   }
-};
+});
+

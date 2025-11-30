@@ -1,13 +1,387 @@
 
 
-// const Price = require("../models/priceModel");
-// const Category = require("../models/categoryModel");
+// // const Price = require("../models/priceModel");
+// // const Category = require("../models/categoryModel");
+// // const cloudinary = require("../utils/cloudinary");
+// // const csv = require("fast-csv");
+// // const schedule = require("node-schedule");
+
+// // // CLOUDINARY UPLOAD
+// // const uploadToCloudinary = (fileBuffer) => {
+// //   return new Promise((resolve, reject) => {
+// //     cloudinary.uploader
+// //       .upload_stream({ folder: "price_images" }, (err, result) => {
+// //         if (err) reject(err);
+// //         else resolve(result.secure_url);
+// //       })
+// //       .end(fileBuffer);
+// //   });
+// // };
+
+// // /* ============================================================
+// //    CREATE PRICE
+// // ============================================================ */
+// // exports.createPrice = async (req, res) => {
+// //   try {
+// //     const {
+// //       name,
+// //       category,
+// //       subcategory,
+// //       basePrice,
+// //       profitLoss,
+// //       description,
+// //       status,
+// //     } = req.body;
+
+// //     let imageUrl = null;
+// //     if (req.file) imageUrl = await uploadToCloudinary(req.file.buffer);
+
+// //     const base = Number(basePrice);
+// //     const pl = Number(profitLoss);
+// //     const sale = base + pl;
+
+// //     const price = await Price.create({
+// //       name,
+// //       category,
+// //       subcategory: subcategory || null,
+// //       basePrice: base,
+// //       profitLoss: pl,
+// //       salePrice: sale,
+
+// //       lockedPrice: 0,
+// //       yesterdayLock: 0,
+// //       brokerDisplay: 0, // Day-1 rule
+
+// //       description,
+// //       status,
+// //       image: imageUrl,
+// //     });
+
+// //     const populated = await Price.findById(price._id)
+// //       .populate("category", "name")
+// //       .lean();
+
+// //     res.status(201).json({ success: true, data: populated });
+// //   } catch (err) {
+// //     res.status(500).json({ success: false, message: err.message });
+// //   }
+// // };
+
+// // /* ============================================================
+// //    GET ALL
+// // ============================================================ */
+// // exports.getPrices = async (req, res) => {
+// //   try {
+// //     const prices = await Price.find()
+// //       .populate("category", "name")
+// //       .sort({ createdAt: -1 });
+
+// //     res.json({ success: true, data: prices });
+// //   } catch (err) {
+// //     res.status(500).json({ success: false, message: err.message });
+// //   }
+// // };
+
+// // /* ============================================================
+// //    WEBSITE ACTIVE API
+// // ============================================================ */
+// // exports.getWebsitePrices = async (req, res) => {
+// //   try {
+// //     const prices = await Price.find({ status: "active" })
+// //       .populate("category", "name")
+// //       .sort({ createdAt: -1 });
+
+// //     res.json({ success: true, data: prices });
+// //   } catch (err) {
+// //     res.status(500).json({ success: false, message: err.message });
+// //   }
+// // };
+
+// // /* ============================================================
+// //    UPDATE (BASE PRICE + PROFIT LOSS)
+// // ============================================================ */
+// // exports.updatePrice = async (req, res) => {
+// //   try {
+// //     const { id } = req.params;
+// //     const body = req.body;
+
+// //     let item = await Price.findById(id);
+// //     if (!item)
+// //       return res.status(404).json({ success: false, message: "Not found" });
+
+// //     if (req.file) body.image = await uploadToCloudinary(req.file.buffer);
+
+// //     if (body.basePrice !== undefined) item.basePrice = Number(body.basePrice);
+// //     if (body.profitLoss !== undefined)
+// //       item.profitLoss = Number(body.profitLoss);
+
+// //     // Sale price always updates
+// //     item.salePrice = item.basePrice + item.profitLoss;
+
+// //     if (body.name) item.name = body.name;
+// //     if (body.description) item.description = body.description;
+// //     if (body.status) item.status = body.status;
+
+// //     // DO NOT TOUCH lockedPrice or brokerDisplay here
+
+// //     await item.save();
+
+// //     const updated = await Price.findById(id).populate("category", "name");
+// //     res.json({ success: true, data: updated });
+// //   } catch (err) {
+// //     res.status(500).json({ success: false, message: err.message });
+// //   }
+// // };
+
+// // /* ============================================================
+// //    QUICK UPDATE PROFIT/LOSS
+// // ============================================================ */
+// // exports.updateDiff = async (req, res) => {
+// //   try {
+// //     const id = req.params.id;
+// //     const diff = Number(req.body.diff);
+
+// //     let item = await Price.findById(id);
+// //     if (!item)
+// //       return res.status(404).json({ success: false, message: "Not found" });
+
+// //     item.profitLoss = diff; // overwrite
+// //     item.salePrice = item.basePrice + item.profitLoss;
+
+// //     // DO NOT TOUCH lock info
+
+// //     await item.save();
+
+// //     const updated = await Price.findById(id).populate("category", "name");
+// //     res.json({ success: true, data: updated });
+// //   } catch (err) {
+// //     res.status(500).json({ success: false, message: err.message });
+// //   }
+// // };
+
+// // /* ============================================================
+// //    STATUS CHANGE
+// // ============================================================ */
+// // exports.updateStatus = async (req, res) => {
+// //   try {
+// //     const updated = await Price.findByIdAndUpdate(
+// //       req.params.id,
+// //       { status: req.body.status },
+// //       { new: true }
+// //     );
+
+// //     res.json({ success: true, data: updated });
+// //   } catch (err) {
+// //     res.status(500).json({ success: false, message: err.message });
+// //   }
+// // };
+
+// // /* ============================================================
+// //    DELETE SINGLE
+// // ============================================================ */
+// // exports.deletePrice = async (req, res) => {
+// //   try {
+// //     await Price.findByIdAndDelete(req.params.id);
+// //     res.json({ success: true });
+// //   } catch (err) {
+// //     res.status(500).json({ success: false, message: err.message });
+// //   }
+// // };
+
+// // /* ============================================================
+// //    DELETE SELECTED
+// // ============================================================ */
+// // exports.deleteSelected = async (req, res) => {
+// //   try {
+// //     const { ids } = req.body;
+
+// //     await Price.deleteMany({ _id: { $in: ids } });
+
+// //     res.json({ success: true, deleted: ids.length });
+// //   } catch (err) {
+// //     res.status(500).json({ success: false, message: err.message });
+// //   }
+// // };
+
+// // /* ============================================================
+// //    COPY PRODUCT
+// // ============================================================ */
+// // exports.copyPrice = async (req, res) => {
+// //   try {
+// //     const item = await Price.findById(req.params.id);
+// //     if (!item) return res.json({ success: false });
+
+// //     const newItem = await Price.create({
+// //       name: item.name,
+// //       category: item.category,
+// //       subcategory: item.subcategory,
+// //       basePrice: item.basePrice,
+// //       profitLoss: item.profitLoss,
+// //       salePrice: item.salePrice,
+
+// //       lockedPrice: 0,
+// //       yesterdayLock: 0,
+// //       brokerDisplay: 0,
+
+// //       status: item.status,
+// //       description: item.description,
+// //       image: null,
+// //     });
+
+// //     res.json({ success: true, data: newItem });
+// //   } catch (err) {
+// //     res.status(500).json({ success: false, message: err.message });
+// //   }
+// // };
+
+// // /* ============================================================
+// //    BULK UPDATE
+// // ============================================================ */
+// // exports.bulkUpdatePrices = async (req, res) => {
+// //   try {
+// //     const { products } = req.body;
+// //     const updated = [];
+
+// //     for (const p of products) {
+// //       let item = await Price.findById(p.id);
+// //       if (!item) continue;
+
+// //       if (p.basePrice !== undefined) item.basePrice = Number(p.basePrice);
+// //       if (p.profitLoss !== undefined)
+// //         item.profitLoss = Number(p.profitLoss);
+
+// //       item.salePrice = item.basePrice + item.profitLoss;
+
+// //       if (p.status) item.status = p.status;
+
+// //       // DO NOT TOUCH lock price
+// //       await item.save();
+// //       updated.push(item);
+// //     }
+
+// //     res.json({ success: true, updated });
+// //   } catch (err) {
+// //     res.status(500).json({ success: false, message: err.message });
+// //   }
+// // };
+
+// // /* ============================================================
+// //    CSV IMPORT
+// // ============================================================ */
+// // exports.importPrices = async (req, res) => {
+// //   try {
+// //     if (!req.file)
+// //       return res.status(400).json({ success: false, message: "CSV required" });
+
+// //     const rows = [];
+// //     const csvData = req.file.buffer.toString("utf8");
+
+// //     csv
+// //       .parseString(csvData, { headers: true })
+// //       .on("data", (row) => rows.push(row))
+// //       .on("end", async () => {
+// //         for (const r of rows) {
+// //           let cat = await Category.findOne({ name: r.categoryName });
+// //           if (!cat) cat = await Category.create({ name: r.categoryName });
+
+// //           await Price.create({
+// //             name: r.name,
+// //             category: cat._id,
+// //             basePrice: Number(r.basePrice),
+// //             profitLoss: Number(r.profitLoss),
+// //             salePrice: Number(r.basePrice) + Number(r.profitLoss),
+
+// //             lockedPrice: 0,
+// //             brokerDisplay: 0,
+
+// //             description: r.description || "",
+// //             status: r.status || "inactive",
+// //             image: r.imageUrl || "",
+// //           });
+// //         }
+
+// //         res.json({ success: true, inserted: rows.length });
+// //       });
+// //   } catch (err) {
+// //     res.status(500).json({ success: false, message: err.message });
+// //   }
+// // };
+
+// // /* ============================================================
+// //    CSV EXPORT
+// // ============================================================ */
+// // exports.exportPrices = async (req, res) => {
+// //   try {
+// //     const prices = await Price.find().populate("category", "name");
+
+// //     res.setHeader("Content-Disposition", "attachment; filename=prices.csv");
+// //     res.setHeader("Content-Type", "text/csv");
+
+// //     const csvStream = csv.format({ headers: true });
+// //     csvStream.pipe(res);
+
+// //     for (const p of prices) {
+// //       csvStream.write({
+// //         id: p._id,
+// //         name: p.name,
+// //         categoryName: p.category?.name || "",
+// //         basePrice: p.basePrice,
+// //         profitLoss: p.profitLoss,
+// //         salePrice: p.salePrice,
+// //         lockedPrice: p.lockedPrice,
+        
+// //         brokerDisplay: p.brokerDisplay,
+// //         status: p.status,
+// //         description: p.description,
+// //         imageUrl: p.image,
+// //       });
+// //     }
+
+// //     csvStream.end();
+// //   } catch (err) {
+// //     res.status(500).json({ success: false, message: err.message });
+// //   }
+// // };
+
+// // /* ============================================================
+// //    MIDNIGHT AUTO LOCK (FIXED)
+// // ============================================================ */
+// // schedule.scheduleJob("0 0 * * *", async () => {
+// //   try {
+// //     const items = await Price.find();
+
+// //     for (const p of items) {
+// //       const yesterday = p.lockedPrice;
+// //       const todayLock = p.salePrice;
+
+// //       p.yesterdayLock = yesterday;
+// //       p.lockedPrice = todayLock;
+
+// //       // FIXED LOGIC
+// //       if (yesterday === 0) {
+// //         p.brokerDisplay = 0;
+// //       } else {
+// //         p.brokerDisplay = todayLock - yesterday;
+// //       }
+
+// //       await p.save();
+// //     }
+
+// //     console.log("🔁 Midnight Lock Update Completed");
+// //   } catch (err) {
+// //     console.error("Midnight Error:", err);
+// //   }
+// // });
+
+
+
+//     const Price = require("../models/priceModel");
 // const cloudinary = require("../utils/cloudinary");
 // const csv = require("fast-csv");
 // const schedule = require("node-schedule");
 
-// // CLOUDINARY UPLOAD
-// const uploadToCloudinary = (fileBuffer) => {
+// /* CLOUDINARY UPLOAD */
+// const uploadToCloudinary = async (fileBuffer) => {
 //   return new Promise((resolve, reject) => {
 //     cloudinary.uploader
 //       .upload_stream({ folder: "price_images" }, (err, result) => {
@@ -18,48 +392,90 @@
 //   });
 // };
 
-// /* ============================================================
-//    CREATE PRICE
-// ============================================================ */
+// /* AUTO-LOCK LOGIC */
+// async function runDailyLock() {
+//   const today = new Date().toISOString().split("T")[0];
+//   const items = await Price.find();
+
+//   for (const p of items) {
+//     if (p.lastLockDate === today) continue;
+
+//     const yesterday = p.lockedPrice;
+//     const todayLock = p.salePrice;
+
+//     p.yesterdayLock = yesterday;
+//     p.lockedPrice = todayLock;
+//     p.brokerDisplay = yesterday === 0 ? 0 : todayLock - yesterday;
+//     p.lastLockDate = today;
+
+//     await p.save();
+//   }
+
+//   console.log("🔁 Daily Auto-Lock Updated");
+// }
+
+// /* GET ALL PRICES + TRIGGER LOCK */
+// exports.getPrices = async (req, res) => {
+//   try {
+//     await runDailyLock();
+
+//     const data = await Price.find()
+//       .populate("category", "name")
+//       .sort({ createdAt: -1 });
+
+//     res.json({ success: true, data });
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
+
+// /* GET WEBSITE ACTIVE PRICES */
+// exports.getWebsitePrices = async (req, res) => {
+//   try {
+//     await runDailyLock();
+
+//     const data = await Price.find({ status: "active" })
+//       .populate("category", "name")
+//       .sort({ createdAt: -1 });
+
+//     res.json({ success: true, data });
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
+
+// /* CREATE PRICE */
 // exports.createPrice = async (req, res) => {
 //   try {
-//     const {
-//       name,
-//       category,
-//       subcategory,
-//       basePrice,
-//       profitLoss,
-//       description,
-//       status,
-//     } = req.body;
+//     const body = req.body;
 
 //     let imageUrl = null;
 //     if (req.file) imageUrl = await uploadToCloudinary(req.file.buffer);
 
-//     const base = Number(basePrice);
-//     const pl = Number(profitLoss);
+//     const base = Number(body.basePrice);
+//     const pl = Number(body.profitLoss);
 //     const sale = base + pl;
 
 //     const price = await Price.create({
-//       name,
-//       category,
-//       subcategory: subcategory || null,
+//       name: body.name,
+//       category: body.category,
+//       subcategory: body.subcategory || null,
+
 //       basePrice: base,
 //       profitLoss: pl,
 //       salePrice: sale,
 
 //       lockedPrice: 0,
 //       yesterdayLock: 0,
-//       brokerDisplay: 0, // Day-1 rule
+//       brokerDisplay: 0,
+//       lastLockDate: "",
 
-//       description,
-//       status,
+//       description: body.description,
+//       status: body.status || "inactive",
 //       image: imageUrl,
 //     });
 
-//     const populated = await Price.findById(price._id)
-//       .populate("category", "name")
-//       .lean();
+//     const populated = await Price.findById(price._id).populate("category", "name");
 
 //     res.status(201).json({ success: true, data: populated });
 //   } catch (err) {
@@ -67,101 +483,61 @@
 //   }
 // };
 
-// /* ============================================================
-//    GET ALL
-// ============================================================ */
-// exports.getPrices = async (req, res) => {
-//   try {
-//     const prices = await Price.find()
-//       .populate("category", "name")
-//       .sort({ createdAt: -1 });
-
-//     res.json({ success: true, data: prices });
-//   } catch (err) {
-//     res.status(500).json({ success: false, message: err.message });
-//   }
-// };
-
-// /* ============================================================
-//    WEBSITE ACTIVE API
-// ============================================================ */
-// exports.getWebsitePrices = async (req, res) => {
-//   try {
-//     const prices = await Price.find({ status: "active" })
-//       .populate("category", "name")
-//       .sort({ createdAt: -1 });
-
-//     res.json({ success: true, data: prices });
-//   } catch (err) {
-//     res.status(500).json({ success: false, message: err.message });
-//   }
-// };
-
-// /* ============================================================
-//    UPDATE (BASE PRICE + PROFIT LOSS)
-// ============================================================ */
+// /* UPDATE PRICE */
 // exports.updatePrice = async (req, res) => {
 //   try {
-//     const { id } = req.params;
-//     const body = req.body;
+//     const id = req.params.id;
 
 //     let item = await Price.findById(id);
-//     if (!item)
-//       return res.status(404).json({ success: false, message: "Not found" });
+//     if (!item) return res.status(404).json({ success: false, message: "Not Found" });
 
-//     if (req.file) body.image = await uploadToCloudinary(req.file.buffer);
+//     if (req.file) item.image = await uploadToCloudinary(req.file.buffer);
 
-//     if (body.basePrice !== undefined) item.basePrice = Number(body.basePrice);
-//     if (body.profitLoss !== undefined)
-//       item.profitLoss = Number(body.profitLoss);
+//     if (req.body.basePrice !== undefined)
+//       item.basePrice = Number(req.body.basePrice);
 
-//     // Sale price always updates
+//     if (req.body.profitLoss !== undefined)
+//       item.profitLoss = Number(req.body.profitLoss);
+
 //     item.salePrice = item.basePrice + item.profitLoss;
 
-//     if (body.name) item.name = body.name;
-//     if (body.description) item.description = body.description;
-//     if (body.status) item.status = body.status;
-
-//     // DO NOT TOUCH lockedPrice or brokerDisplay here
+//     if (req.body.name) item.name = req.body.name;
+//     if (req.body.description) item.description = req.body.description;
+//     if (req.body.status) item.status = req.body.status;
 
 //     await item.save();
 
 //     const updated = await Price.findById(id).populate("category", "name");
+
 //     res.json({ success: true, data: updated });
 //   } catch (err) {
 //     res.status(500).json({ success: false, message: err.message });
 //   }
 // };
 
-// /* ============================================================
-//    QUICK UPDATE PROFIT/LOSS
-// ============================================================ */
+// /* QUICK PROFIT/LOSS UPDATE */
 // exports.updateDiff = async (req, res) => {
 //   try {
 //     const id = req.params.id;
 //     const diff = Number(req.body.diff);
 
 //     let item = await Price.findById(id);
-//     if (!item)
-//       return res.status(404).json({ success: false, message: "Not found" });
+//     if (!item) return res.status(404).json({ success: false });
 
-//     item.profitLoss = diff; // overwrite
-//     item.salePrice = item.basePrice + item.profitLoss;
-
-//     // DO NOT TOUCH lock info
+//     item.profitLoss = diff;
+//     item.salePrice = item.basePrice + diff;
 
 //     await item.save();
 
 //     const updated = await Price.findById(id).populate("category", "name");
+
 //     res.json({ success: true, data: updated });
 //   } catch (err) {
 //     res.status(500).json({ success: false, message: err.message });
 //   }
 // };
 
-// /* ============================================================
-//    STATUS CHANGE
-// ============================================================ */
+// /* STATUS CHANGE */
 // exports.updateStatus = async (req, res) => {
 //   try {
 //     const updated = await Price.findByIdAndUpdate(
@@ -176,9 +552,7 @@
 //   }
 // };
 
-// /* ============================================================
-//    DELETE SINGLE
-// ============================================================ */
+// /* DELETE SINGLE */
 // exports.deletePrice = async (req, res) => {
 //   try {
 //     await Price.findByIdAndDelete(req.params.id);
@@ -188,24 +562,17 @@
 //   }
 // };
 
-// /* ============================================================
-//    DELETE SELECTED
-// ============================================================ */
+// /* DELETE SELECTED */
 // exports.deleteSelected = async (req, res) => {
 //   try {
-//     const { ids } = req.body;
-
-//     await Price.deleteMany({ _id: { $in: ids } });
-
-//     res.json({ success: true, deleted: ids.length });
+//     await Price.deleteMany({ _id: { $in: req.body.ids } });
+//     res.json({ success: true, deleted: req.body.ids.length });
 //   } catch (err) {
 //     res.status(500).json({ success: false, message: err.message });
 //   }
 // };
 
-// /* ============================================================
-//    COPY PRODUCT
-// ============================================================ */
+// /* COPY PRICE */
 // exports.copyPrice = async (req, res) => {
 //   try {
 //     const item = await Price.findById(req.params.id);
@@ -218,11 +585,10 @@
 //       basePrice: item.basePrice,
 //       profitLoss: item.profitLoss,
 //       salePrice: item.salePrice,
-
 //       lockedPrice: 0,
 //       yesterdayLock: 0,
 //       brokerDisplay: 0,
-
+//       lastLockDate: "",
 //       status: item.status,
 //       description: item.description,
 //       image: null,
@@ -234,27 +600,24 @@
 //   }
 // };
 
-// /* ============================================================
-//    BULK UPDATE
-// ============================================================ */
+// /* BULK UPDATE */
 // exports.bulkUpdatePrices = async (req, res) => {
 //   try {
-//     const { products } = req.body;
 //     const updated = [];
 
-//     for (const p of products) {
+//     for (const p of req.body.products) {
 //       let item = await Price.findById(p.id);
 //       if (!item) continue;
 
-//       if (p.basePrice !== undefined) item.basePrice = Number(p.basePrice);
+//       if (p.basePrice !== undefined)
+//         item.basePrice = Number(p.basePrice);
+
 //       if (p.profitLoss !== undefined)
 //         item.profitLoss = Number(p.profitLoss);
 
 //       item.salePrice = item.basePrice + item.profitLoss;
-
 //       if (p.status) item.status = p.status;
 
-//       // DO NOT TOUCH lock price
 //       await item.save();
 //       updated.push(item);
 //     }
@@ -265,51 +628,104 @@
 //   }
 // };
 
-// /* ============================================================
-//    CSV IMPORT
-// ============================================================ */
+// /* IMPORT CSV (WITH IMAGE SUPPORT) */
 // exports.importPrices = async (req, res) => {
 //   try {
 //     if (!req.file)
 //       return res.status(400).json({ success: false, message: "CSV required" });
 
+//     const file = req.file.buffer.toString("utf-8");
 //     const rows = [];
-//     const csvData = req.file.buffer.toString("utf8");
 
-//     csv
-//       .parseString(csvData, { headers: true })
+//     csv.parseString(file, { headers: true })
 //       .on("data", (row) => rows.push(row))
 //       .on("end", async () => {
+//         let imported = [];
+
 //         for (const r of rows) {
-//           let cat = await Category.findOne({ name: r.categoryName });
-//           if (!cat) cat = await Category.create({ name: r.categoryName });
+//           let img = "";
 
-//           await Price.create({
+//           if (r.image && r.image.startsWith("http")) {
+//             const upload = await cloudinary.uploader.upload(r.image, {
+//               folder: "price_images",
+//             });
+//             img = upload.secure_url;
+//           }
+
+//           if (r.image && r.image.startsWith("data:image")) {
+//             const upload = await cloudinary.uploader.upload(r.image, {
+//               folder: "price_images",
+//             });
+//             img = upload.secure_url;
+//           }
+
+//           const base = Number(r.basePrice || 0);
+//           const pl = Number(r.profitLoss || 0);
+//           const sale = base + pl;
+
+//           const price = await Price.create({
 //             name: r.name,
-//             category: cat._id,
-//             basePrice: Number(r.basePrice),
-//             profitLoss: Number(r.profitLoss),
-//             salePrice: Number(r.basePrice) + Number(r.profitLoss),
-
-//             lockedPrice: 0,
+//             category: r.category,
+//             subcategory: r.subcategory || null,
+//             basePrice: base,
+//             profitLoss: pl,
+//             salePrice: sale,
+//             lockedPrice: sale,
+//             yesterdayLock: sale,
 //             brokerDisplay: 0,
-
 //             description: r.description || "",
 //             status: r.status || "inactive",
-//             image: r.imageUrl || "",
+//             image: img,
 //           });
+
+//           imported.push(price);
 //         }
 
-//         res.json({ success: true, inserted: rows.length });
+//         res.json({ success: true, imported: imported.length, items: imported });
 //       });
+
 //   } catch (err) {
 //     res.status(500).json({ success: false, message: err.message });
 //   }
 // };
 
-// /* ============================================================
-//    CSV EXPORT
-// ============================================================ */
+// /* EXPORT SELECTED */
+// exports.exportSelected = async (req, res) => {
+//   try {
+//     const prices = await Price.find({ _id: { $in: req.body.ids } }).populate(
+//       "category",
+//       "name"
+//     );
+
+//     res.setHeader("Content-Disposition", "attachment; filename=selected_prices.csv");
+//     res.setHeader("Content-Type", "text/csv");
+
+//     const csvStream = csv.format({ headers: true });
+//     csvStream.pipe(res);
+
+//     prices.forEach((p) => {
+//       csvStream.write({
+//         id: p._id,
+//         name: p.name,
+//         category: p.category?.name || "",
+//         basePrice: p.basePrice,
+//         profitLoss: p.profitLoss,
+//         salePrice: p.salePrice,
+//         lockedPrice: p.lockedPrice,
+//         yesterdayLock: p.yesterdayLock,
+//         brokerDisplay: p.brokerDisplay,
+//         status: p.status,
+//         image: p.image,
+//       });
+//     });
+
+//     csvStream.end();
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
+
+// /* EXPORT ALL */
 // exports.exportPrices = async (req, res) => {
 //   try {
 //     const prices = await Price.find().populate("category", "name");
@@ -320,22 +736,21 @@
 //     const csvStream = csv.format({ headers: true });
 //     csvStream.pipe(res);
 
-//     for (const p of prices) {
+//     prices.forEach((p) => {
 //       csvStream.write({
 //         id: p._id,
 //         name: p.name,
-//         categoryName: p.category?.name || "",
+//         category: p.category?.name || "",
 //         basePrice: p.basePrice,
 //         profitLoss: p.profitLoss,
 //         salePrice: p.salePrice,
 //         lockedPrice: p.lockedPrice,
-        
+//         yesterdayLock: p.yesterdayLock,
 //         brokerDisplay: p.brokerDisplay,
 //         status: p.status,
-//         description: p.description,
-//         imageUrl: p.image,
+//         image: p.image,
 //       });
-//     }
+//     });
 
 //     csvStream.end();
 //   } catch (err) {
@@ -343,78 +758,65 @@
 //   }
 // };
 
-// /* ============================================================
-//    MIDNIGHT AUTO LOCK (FIXED)
-// ============================================================ */
+// /* MIDNIGHT AUTO LOCK */
 // schedule.scheduleJob("0 0 * * *", async () => {
 //   try {
-//     const items = await Price.find();
-
-//     for (const p of items) {
-//       const yesterday = p.lockedPrice;
-//       const todayLock = p.salePrice;
-
-//       p.yesterdayLock = yesterday;
-//       p.lockedPrice = todayLock;
-
-//       // FIXED LOGIC
-//       if (yesterday === 0) {
-//         p.brokerDisplay = 0;
-//       } else {
-//         p.brokerDisplay = todayLock - yesterday;
-//       }
-
-//       await p.save();
-//     }
-
-//     console.log("🔁 Midnight Lock Update Completed");
+//     await runDailyLock();
+//     console.log("🌙 Midnight Auto-Lock Executed");
 //   } catch (err) {
-//     console.error("Midnight Error:", err);
+//     console.log("Midnight Error:", err.message);
 //   }
 // });
 
-
-
-    const Price = require("../models/priceModel");
+const Price = require("../models/priceModel");
 const cloudinary = require("../utils/cloudinary");
 const csv = require("fast-csv");
 const schedule = require("node-schedule");
 
-/* CLOUDINARY UPLOAD */
-const uploadToCloudinary = async (fileBuffer) => {
+/* CLOUDINARY UPLOAD (buffer -> secure_url) */
+const uploadToCloudinary = (fileBuffer) => {
   return new Promise((resolve, reject) => {
     cloudinary.uploader
       .upload_stream({ folder: "price_images" }, (err, result) => {
-        if (err) reject(err);
-        else resolve(result.secure_url);
+        if (err) return reject(err);
+        resolve(result.secure_url);
       })
       .end(fileBuffer);
   });
 };
 
-/* AUTO-LOCK LOGIC */
+/* AUTO-LOCK: runDailyLock()
+   - Only sets lockedPrice once per day (uses lastLockDate)
+   - lockedPrice becomes current salePrice (which reflects latest daytime changes)
+   - yesterdayLock set to previous lockedPrice
+   - brokerDisplay = lockedPrice - yesterdayLock (or 0 when yesterdayLock === 0)
+*/
 async function runDailyLock() {
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
   const items = await Price.find();
 
   for (const p of items) {
-    if (p.lastLockDate === today) continue;
+    if (p.lastLockDate === today) continue; // already locked today
 
-    const yesterday = p.lockedPrice;
-    const todayLock = p.salePrice;
+    const previousLocked = p.lockedPrice || 0;
+    const todayLock = p.salePrice || 0;
 
-    p.yesterdayLock = yesterday;
+    p.yesterdayLock = previousLocked;
     p.lockedPrice = todayLock;
-    p.brokerDisplay = yesterday === 0 ? 0 : todayLock - yesterday;
+    p.brokerDisplay = previousLocked === 0 ? 0 : todayLock - previousLocked;
     p.lastLockDate = today;
 
     await p.save();
   }
 
-  console.log("🔁 Daily Auto-Lock Updated");
+  console.log("🔁 Daily Auto-Lock Updated:", today);
 }
 
-/* GET ALL PRICES + TRIGGER LOCK */
+/* ===========================
+   Exports - controllers
+   =========================== */
+
+/* GET ALL PRICES (runs lock check first) */
 exports.getPrices = async (req, res) => {
   try {
     await runDailyLock();
@@ -444,62 +846,63 @@ exports.getWebsitePrices = async (req, res) => {
   }
 };
 
-/* CREATE PRICE */
+/* CREATE PRICE
+   - lockedPrice stays 0 on creation (so new items don't immediately fill lock)
+   - salePrice = basePrice + profitLoss
+*/
 exports.createPrice = async (req, res) => {
   try {
     const body = req.body;
-
     let imageUrl = null;
     if (req.file) imageUrl = await uploadToCloudinary(req.file.buffer);
 
-    const base = Number(body.basePrice);
-    const pl = Number(body.profitLoss);
+    const base = Number(body.basePrice || 0);
+    const pl = Number(body.profitLoss || 0);
     const sale = base + pl;
 
     const price = await Price.create({
       name: body.name,
       category: body.category,
       subcategory: body.subcategory || null,
-
       basePrice: base,
       profitLoss: pl,
       salePrice: sale,
-
+      // keep locks zero on creation
       lockedPrice: 0,
       yesterdayLock: 0,
       brokerDisplay: 0,
       lastLockDate: "",
 
-      description: body.description,
+      description: body.description || "",
       status: body.status || "inactive",
-      image: imageUrl,
+      image: imageUrl || "",
     });
 
     const populated = await Price.findById(price._id).populate("category", "name");
-
     res.status(201).json({ success: true, data: populated });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
 
-/* UPDATE PRICE */
+/* UPDATE PRICE (base/profitLoss/name/status/image)
+   - Does NOT touch lockedPrice/yesterdayLock/lastLockDate — lock only at midnight
+*/
 exports.updatePrice = async (req, res) => {
   try {
     const id = req.params.id;
-
     let item = await Price.findById(id);
     if (!item) return res.status(404).json({ success: false, message: "Not Found" });
 
-    if (req.file) item.image = await uploadToCloudinary(req.file.buffer);
+    if (req.file) {
+      item.image = await uploadToCloudinary(req.file.buffer);
+    }
 
-    if (req.body.basePrice !== undefined)
-      item.basePrice = Number(req.body.basePrice);
+    if (req.body.basePrice !== undefined) item.basePrice = Number(req.body.basePrice);
+    if (req.body.profitLoss !== undefined) item.profitLoss = Number(req.body.profitLoss);
 
-    if (req.body.profitLoss !== undefined)
-      item.profitLoss = Number(req.body.profitLoss);
-
-    item.salePrice = item.basePrice + item.profitLoss;
+    // always keep salePrice synced with base+profit
+    item.salePrice = (item.basePrice || 0) + (item.profitLoss || 0);
 
     if (req.body.name) item.name = req.body.name;
     if (req.body.description) item.description = req.body.description;
@@ -508,29 +911,27 @@ exports.updatePrice = async (req, res) => {
     await item.save();
 
     const updated = await Price.findById(id).populate("category", "name");
-
     res.json({ success: true, data: updated });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
 
-/* QUICK PROFIT/LOSS UPDATE */
+/* QUICK PROFIT/LOSS UPDATE (updateDiff) */
 exports.updateDiff = async (req, res) => {
   try {
     const id = req.params.id;
     const diff = Number(req.body.diff);
 
     let item = await Price.findById(id);
-    if (!item) return res.status(404).json({ success: false });
+    if (!item) return res.status(404).json({ success: false, message: "Not Found" });
 
     item.profitLoss = diff;
-    item.salePrice = item.basePrice + diff;
+    item.salePrice = (item.basePrice || 0) + diff;
 
     await item.save();
 
     const updated = await Price.findById(id).populate("category", "name");
-
     res.json({ success: true, data: updated });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -545,7 +946,6 @@ exports.updateStatus = async (req, res) => {
       { status: req.body.status },
       { new: true }
     );
-
     res.json({ success: true, data: updated });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -565,8 +965,9 @@ exports.deletePrice = async (req, res) => {
 /* DELETE SELECTED */
 exports.deleteSelected = async (req, res) => {
   try {
-    await Price.deleteMany({ _id: { $in: req.body.ids } });
-    res.json({ success: true, deleted: req.body.ids.length });
+    const ids = req.body.ids || [];
+    await Price.deleteMany({ _id: { $in: ids } });
+    res.json({ success: true, deleted: ids.length });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -603,19 +1004,17 @@ exports.copyPrice = async (req, res) => {
 /* BULK UPDATE */
 exports.bulkUpdatePrices = async (req, res) => {
   try {
+    const products = req.body.products || [];
     const updated = [];
 
-    for (const p of req.body.products) {
+    for (const p of products) {
       let item = await Price.findById(p.id);
       if (!item) continue;
 
-      if (p.basePrice !== undefined)
-        item.basePrice = Number(p.basePrice);
+      if (p.basePrice !== undefined) item.basePrice = Number(p.basePrice);
+      if (p.profitLoss !== undefined) item.profitLoss = Number(p.profitLoss);
 
-      if (p.profitLoss !== undefined)
-        item.profitLoss = Number(p.profitLoss);
-
-      item.salePrice = item.basePrice + item.profitLoss;
+      item.salePrice = (item.basePrice || 0) + (item.profitLoss || 0);
       if (p.status) item.status = p.status;
 
       await item.save();
@@ -628,11 +1027,13 @@ exports.bulkUpdatePrices = async (req, res) => {
   }
 };
 
-/* IMPORT CSV (WITH IMAGE SUPPORT) */
+/* IMPORT CSV
+   - Expects CSV headers: name, category, basePrice, profitLoss, description, status, image (image can be URL or base64)
+   - On import I set lockedPrice = 0 and yesterdayLock = 0 (to avoid accidental locks on import)
+*/
 exports.importPrices = async (req, res) => {
   try {
-    if (!req.file)
-      return res.status(400).json({ success: false, message: "CSV required" });
+    if (!req.file) return res.status(400).json({ success: false, message: "CSV required" });
 
     const file = req.file.buffer.toString("utf-8");
     const rows = [];
@@ -640,39 +1041,35 @@ exports.importPrices = async (req, res) => {
     csv.parseString(file, { headers: true })
       .on("data", (row) => rows.push(row))
       .on("end", async () => {
-        let imported = [];
+        const imported = [];
 
         for (const r of rows) {
           let img = "";
-
-          if (r.image && r.image.startsWith("http")) {
-            const upload = await cloudinary.uploader.upload(r.image, {
-              folder: "price_images",
-            });
-            img = upload.secure_url;
-          }
-
-          if (r.image && r.image.startsWith("data:image")) {
-            const upload = await cloudinary.uploader.upload(r.image, {
-              folder: "price_images",
-            });
-            img = upload.secure_url;
+          // if URL or base64, try upload, else leave empty
+          try {
+            if (r.image && (r.image.startsWith("http") || r.image.startsWith("data:image"))) {
+              const upload = await cloudinary.uploader.upload(r.image, { folder: "price_images" });
+              img = upload.secure_url;
+            }
+          } catch (uploadErr) {
+            console.warn("Image upload failed for row, continuing without image", uploadErr.message);
           }
 
           const base = Number(r.basePrice || 0);
           const pl = Number(r.profitLoss || 0);
-          const sale = base + pl;
 
           const price = await Price.create({
             name: r.name,
-            category: r.category,
+            category: r.category || null,
             subcategory: r.subcategory || null,
             basePrice: base,
             profitLoss: pl,
-            salePrice: sale,
-            lockedPrice: sale,
-            yesterdayLock: sale,
+            salePrice: base + pl,
+            // imports should NOT auto-fill lock (keep zero) so the midnight job will lock properly
+            lockedPrice: 0,
+            yesterdayLock: 0,
             brokerDisplay: 0,
+            lastLockDate: "",
             description: r.description || "",
             status: r.status || "inactive",
             image: img,
@@ -681,9 +1078,8 @@ exports.importPrices = async (req, res) => {
           imported.push(price);
         }
 
-        res.json({ success: true, imported: imported.length, items: imported });
+        res.json({ success: true, imported: imported.length });
       });
-
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -692,10 +1088,8 @@ exports.importPrices = async (req, res) => {
 /* EXPORT SELECTED */
 exports.exportSelected = async (req, res) => {
   try {
-    const prices = await Price.find({ _id: { $in: req.body.ids } }).populate(
-      "category",
-      "name"
-    );
+    const ids = req.body.ids || [];
+    const prices = await Price.find({ _id: { $in: ids } }).populate("category", "name");
 
     res.setHeader("Content-Disposition", "attachment; filename=selected_prices.csv");
     res.setHeader("Content-Type", "text/csv");
@@ -703,7 +1097,7 @@ exports.exportSelected = async (req, res) => {
     const csvStream = csv.format({ headers: true });
     csvStream.pipe(res);
 
-    prices.forEach((p) => {
+    for (const p of prices) {
       csvStream.write({
         id: p._id,
         name: p.name,
@@ -717,7 +1111,7 @@ exports.exportSelected = async (req, res) => {
         status: p.status,
         image: p.image,
       });
-    });
+    }
 
     csvStream.end();
   } catch (err) {
@@ -758,12 +1152,12 @@ exports.exportPrices = async (req, res) => {
   }
 };
 
-/* MIDNIGHT AUTO LOCK */
+/* schedule: run at midnight server time (0 0 * * *) */
 schedule.scheduleJob("0 0 * * *", async () => {
   try {
     await runDailyLock();
     console.log("🌙 Midnight Auto-Lock Executed");
   } catch (err) {
-    console.log("Midnight Error:", err.message);
+    console.error("Midnight Error:", err.message);
   }
 });

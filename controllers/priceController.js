@@ -420,7 +420,6 @@
 // }, 60 * 1000);
 
 
-
 const Price = require("../models/priceModel");
 const cloudinary = require("../utils/cloudinary");
 const csv = require("fast-csv");
@@ -440,7 +439,7 @@ const uploadToCloudinary = (fileBuffer) => {
 };
 
 /* ======================================================
-      MIDNIGHT AUTO LOCK (SALE → LOCK)
+      MIDNIGHT AUTO LOCK LOGIC
 ====================================================== */
 async function runDailyLock() {
   const now = new Date();
@@ -455,7 +454,7 @@ async function runDailyLock() {
   const items = await Price.find();
 
   for (const p of items) {
-    if (p.lastLockDate === today) continue;
+    if (p.lastLockDate === today) continue; // already locked today
 
     const created = new Date(p.createdAt);
     const createdToday =
@@ -476,47 +475,35 @@ async function runDailyLock() {
     await p.save();
   }
 
-  console.log("🌙 Auto Lock Updated:", today);
+  console.log("🌙 Auto Lock Done:", today);
 }
 
 /* ======================================================
-      SAFE INTERVAL CHECKER (WORKS ON VERCEL/RENDER)
+      SAFE AUTO-LOCK CHECK ON EVERY GET /prices
 ====================================================== */
-
-/* -------- REAL MIDNIGHT MODE (uncomment this after test) -----
-
-setInterval(() => {
+async function checkAutoLock() {
   const now = new Date();
-  const hr = now.getHours();
-  const min = now.getMinutes();
+  const today =
+    now.getFullYear() +
+    "-" +
+    String(now.getMonth() + 1).padStart(2, "0") +
+    "-" +
+    String(now.getDate()).padStart(2, "0");
 
-  if (hr === 0 && min === 0) {
-    console.log("⏰ Running Midnight Lock...");
-    runDailyLock();
+  const any = await Price.findOne();
+  if (any && any.lastLockDate !== today) {
+    console.log("🔥 Auto-lock triggered via API call");
+    await runDailyLock();
   }
-}, 60 * 1000);
-
--------------------------------------------------------------- */
-
-/* -------- TEST MODE (NOW ACTIVE – change time to test) ------ */
-
-setInterval(() => {
-  const now = new Date();
-  const hr = now.getHours();
-  const min = now.getMinutes();
-
-  // 🔥 CHANGE THIS TIME FOR TESTING
-  if (hr === 11 && min === 23) {
-    console.log("🧪 TEST LOCK RUNNING (11:15)...");
-    runDailyLock();
-  }
-}, 60 * 1000);
+}
 
 /* ======================================================
       GET ALL PRICES
 ====================================================== */
 exports.getPrices = async (req, res) => {
   try {
+    await checkAutoLock(); // auto-check trigger
+
     const data = await Price.find().populate("category", "name");
     res.json({ success: true, data });
   } catch (err) {
@@ -524,9 +511,11 @@ exports.getPrices = async (req, res) => {
   }
 };
 
-/* WEBSITE ACTIVE PRODUCTS */
+/* WEBSITE ACTIVE */
 exports.getWebsitePrices = async (req, res) => {
   try {
+    await checkAutoLock();
+
     const data = await Price.find({ status: "active" }).populate("category", "name");
     res.json({ success: true, data });
   } catch (err) {
@@ -544,7 +533,6 @@ exports.createPrice = async (req, res) => {
 
     const base = Number(req.body.basePrice);
     const pl = Number(req.body.profitLoss);
-    const sale = base + pl;
 
     const created = await Price.create({
       name: req.body.name,
@@ -553,7 +541,7 @@ exports.createPrice = async (req, res) => {
 
       basePrice: base,
       profitLoss: pl,
-      salePrice: sale,
+      salePrice: base + pl,
 
       lockedPrice: 0,
       yesterdayLock: 0,
@@ -580,7 +568,6 @@ exports.updatePrice = async (req, res) => {
     if (!item) return res.status(404).json({ success: false });
 
     if (req.file) item.image = await uploadToCloudinary(req.file.buffer);
-
     if (req.body.basePrice !== undefined)
       item.basePrice = Number(req.body.basePrice);
 
@@ -603,7 +590,7 @@ exports.updatePrice = async (req, res) => {
 };
 
 /* ======================================================
-      QUICK PROFIT/LOSS UPDATE
+      QUICK DIFF UPDATE
 ====================================================== */
 exports.updateDiff = async (req, res) => {
   try {
@@ -767,7 +754,7 @@ exports.importPrices = async (req, res) => {
 };
 
 /* ======================================================
-      CSV EXPORT
+      EXPORT ALL CSV
 ====================================================== */
 exports.exportPrices = async (req, res) => {
   try {

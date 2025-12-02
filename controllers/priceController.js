@@ -399,12 +399,23 @@ exports.exportSelected = async (req, res) => {
 /* ======================================================
       MIDNIGHT JOB ONLY
 ====================================================== */
-schedule.scheduleJob("0 0 * * *", async () => {
-  try {
-    await runDailyLock();
-    console.log("🌙 Midnight Auto-Lock Completed");
-  } catch (err) {
-    console.error("Midnight Error:", err.message);
+// schedule.scheduleJob("0 0 * * *", async () => {
+//   try {
+//     await runDailyLock();
+//     console.log("🌙 Midnight Auto-Lock Completed");
+//   } catch (err) {
+//     console.error("Midnight Error:", err.message);
+//   }
+// });
+
+setInterval(() => {
+  const now = new Date();
+  const hr = now.getHours();
+  const min = now.getMinutes();
+
+  if (hr === 0 && min === 0) {
+    console.log("⏰ Running Midnight Lock...");
+    runDailyLock();
   }
-});
+}, 60 * 1000);
 

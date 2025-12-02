@@ -413,9 +413,10 @@ setInterval(() => {
   const hr = now.getHours();
   const min = now.getMinutes();
 
-  if (hr === 0 && min === 0) {
+  if (hr === 11 && min === 15) {
     console.log("⏰ Running Midnight Lock...");
     runDailyLock();
   }
 }, 60 * 1000);
+
 
